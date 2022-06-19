@@ -1,6 +1,6 @@
 class WebhookEvent < ApplicationRecord
-  belongs_to :webhook_endpoint
+  belongs_to :webhook_subscriber
 
-  validates :event, presence: true
+  validates :name, presence: true
   validates :payload, presence: true
 end

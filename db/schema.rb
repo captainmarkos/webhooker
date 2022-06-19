@@ -11,19 +11,19 @@
 # It's strongly recommended that you check this file into your version control system.
 
 ActiveRecord::Schema[7.0].define(version: 2022_06_19_184714) do
-  create_table "webhook_endpoints", force: :cascade do |t|
-    t.string "url", null: false
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-  end
-
   create_table "webhook_events", force: :cascade do |t|
-    t.integer "webhook_endpoint_id", null: false
-    t.string "event", null: false
+    t.integer "webhook_subscriber_id", null: false
+    t.string "name", null: false
     t.text "payload", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.index ["webhook_endpoint_id"], name: "index_webhook_events_on_webhook_endpoint_id"
+    t.index ["webhook_subscriber_id"], name: "index_webhook_events_on_webhook_subscriber_id"
+  end
+
+  create_table "webhook_subscribers", force: :cascade do |t|
+    t.string "url", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
   end
 
 end

@@ -22,7 +22,7 @@ So rather than run inline, we'll need some sort of queueing and background job s
 [Sidekiq](https://github.com/mperham/sidekiq) is powerful background job library that we'll be using to queue up webhook events and process them asynchronously. We'll also be leaning on Sidekiq to handle the bulk of our retry logic
 
 
-### Setup
+### Create the app and setup
 
 ```bash
 rails new webhooker \
@@ -30,12 +30,6 @@ rails new webhooker \
   --database sqlite3 \
   --skip-active-storage \
   --skip-action-cable
-```
-
-```bash
-bin/rails generate migration CreateWebhookEndpoints
-
-bin/rails generate migration CreateWebhookEvents
 ```
 
 ### Turn off irb autocomplete in rails console
@@ -54,9 +48,9 @@ bin/rails console --noautocomplete
 
 [2] pry(main)> pry-theme try vividchalk
 
-[3] pry(main)> s = WebhookEndpoint.create!(url: 'https://functions.ecorp.example/webhooks')
+[3] pry(main)> s = WebhookSubscriber.create!(url: 'https://functions.ecorp.example/webhooks')
 
-[4] pry(main)> e = WebhookEvent.create!(webhook_endpoint: s, event: 'events.test', payload: { test: 1 })
+[4] pry(main)> e = WebhookEvent.create!(webhook_subscriber: s, name: 'events.test', payload: { test: 1 })
 ```
 
 #### Add some pry-themes from the [pry-theme gem](https://github.com/kyrylo/pry-theme).
