@@ -49,15 +49,25 @@ IRB.conf[:USE_AUTOCOMPLETE] = false
 bin/rails console --noautocomplete
 ```
 
-```bash
-cat > .pryrc
-Pry.config.completer = nil  # default is Pry::InputCompleter
+```ruby
+[1] pry(main)> pry-theme install vividchalk
+
+[2] pry(main)> pry-theme try vividchalk
+
+[3] pry(main)> s = WebhookEndpoint.create!(url: 'https://functions.ecorp.example/webhooks')
+
+[4] pry(main)> e = WebhookEvent.create!(webhook_endpoint: s, event: 'events.test', payload: { test: 1 })
 ```
 
+#### Add some pry-themes from the [pry-theme gem](https://github.com/kyrylo/pry-theme).
+```bash
+cat >> .pryrc
+Pry.config.theme = 'vividchalk'
+#Pry.config.theme = 'tomorrow-night'
+#Pry.config.theme = 'pry-modern-256'
+#Pry.config.theme = 'ocean'
+```
 
-
-```ruby
-WebhookEndpoint.create!(url: 'https://functions.ecorp.example/webhooks')
 
 
 
