@@ -40,6 +40,7 @@ group :development, :test do
   gem 'pry-rails'
   gem 'pry-byebug'
   gem 'pry-theme'
+  gem 'rubocop', require: false
 end
 
 group :development do

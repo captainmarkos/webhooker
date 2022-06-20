@@ -10,13 +10,14 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2022_06_19_184714) do
+ActiveRecord::Schema[7.0].define(version: 2022_06_19_223032) do
   create_table "webhook_events", force: :cascade do |t|
     t.integer "webhook_subscriber_id", null: false
     t.string "name", null: false
     t.text "payload", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.json "response", default: {}
     t.index ["webhook_subscriber_id"], name: "index_webhook_events_on_webhook_subscriber_id"
   end
 

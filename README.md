@@ -51,6 +51,8 @@ bin/rails console --noautocomplete
 [3] pry(main)> s = WebhookSubscriber.create!(url: 'https://functions.ecorp.example/webhooks')
 
 [4] pry(main)> e = WebhookEvent.create!(webhook_subscriber: s, name: 'events.test', payload: { test: 1 })
+
+[5] pry(main)> WebhookWorker.new.perform(WebhookEvent.last.id)
 ```
 
 #### Add some pry-themes from the [pry-theme gem](https://github.com/kyrylo/pry-theme).
