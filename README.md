@@ -22,7 +22,7 @@ So rather than run inline, we'll need some sort of queueing and background job s
 [Sidekiq](https://github.com/mperham/sidekiq) is powerful background job library that we'll be using to queue up webhook events and process them asynchronously. We'll also be leaning on Sidekiq to handle the bulk of our retry logic
 
 
-### Create the app and setup
+### Create App and Setup
 
 ```bash
 rails new webhooker \
@@ -32,16 +32,27 @@ rails new webhooker \
   --skip-action-cable
 ```
 
-### Turn off irb autocomplete in rails console
+#### Add Gems
+```ruby
+gem 'sidekiq'
+gem 'redis'
+gem 'http'
+
+# in development, test
+gem 'pry-rails'
+gem 'pry-byebug'
+gem 'pry-theme'
+gem 'rubocop', require: false
+```
+
+#### Turn off irb autocomplete in rails console
 
 ```bash
 cat >> ~/.irbrc
 IRB.conf[:USE_AUTOCOMPLETE] = false
 ```
 
-```bash
-bin/rails console --noautocomplete
-```
+The [pry-theme gem](https://github.com/kyrylo/pry-theme) adds some spice to the rails console.
 
 ```ruby
 [1] pry(main)> pry-theme install vividchalk
@@ -55,18 +66,71 @@ bin/rails console --noautocomplete
 [5] pry(main)> WebhookWorker.new.perform(WebhookEvent.last.id)
 ```
 
-#### Add some pry-themes from the [pry-theme gem](https://github.com/kyrylo/pry-theme).
 ```bash
 cat >> .pryrc
 Pry.config.theme = 'vividchalk'
-#Pry.config.theme = 'tomorrow-night'
-#Pry.config.theme = 'pry-modern-256'
-#Pry.config.theme = 'ocean'
+# Pry.config.theme = 'tomorrow-night'
+# Pry.config.theme = 'pry-modern-256'
+# Pry.config.theme = 'ocean'
 ```
 
 
+### Receiving Live Notification Messages
 
 
+To receive live notification messages (referred to as LNM from here on out) we
+need a server running that will listen for them.  For this particalur app we'll be
+running a rails server that will be sending AND receiving LNMs so nothing else is needed.
+However if we were only receiving LNMs then to test we would need a server to expose our
+local dev environment rails server.  Here's a few options for local development.
+
+- [ngrok](https://ngrok.com/)
+- [localtunnel](https://localtunnel.github.io/www/)
+
+
+For this we'll be using [ngrok](https://ngrok.com/).  After installing run the following
+
+```bash
+# use same port the rails server is using
+$ ngrok http 3300
+```
+
+This will give us a 2 hour session.  Here's the output
+
+```bash
+ngrok by @inconshreveable                                                                     (Ctrl+C to quit)
+
+Session Status            online
+Session Expires           1 hour, 59 minutes
+Version                   2.3.40
+Region                    United States (us)
+Web Interface             http://127.0.0.1:4040
+Forwarding                http://128c-2601-583-701-b790-45b7-647b-44bb-5887.ngrok.io -> http://localhost:3000
+Forwarding                https://128c-2601-583-701-b790-45b7-647b-44bb-5887.ngrok.io -> http://localhost:3000
+
+Connections               ttl     opn     rt1     rt5     p50     p90
+                          0       0       0.00    0.00    0.00    0.00
+```
+
+Start the Rails server and/or console passing the *Forwarding* url as an ENV (protocol not needed)
+
+```bash
+WEBHOOKS_HOST=128c-2601-583-701-b790-45b7-647b-44bb-5887.ngrok.io bin/rails server -p 3300
+
+WEBHOOKS_HOST=128c-2601-583-701-b790-45b7-647b-44bb-5887.ngrok.io bin/rails console
+```
+
+**NOTE** Rails 7 uses [ActionDispatch::HostAuthorization](https://api.rubyonrails.org/classes/ActionDispatch/HostAuthorization.html) middleware to guard against attacks.  So we need to add the following
+
+```ruby
+# config/environments/development.rb
+
+config.host_authorization = {
+  exclude: ->(request) {
+    request.url =~ /healthcheck|ngrok\.io/
+  }
+}
+```
 
 
 

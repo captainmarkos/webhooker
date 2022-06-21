@@ -5,10 +5,10 @@ class WebhookWorker
 
   def perform(event_id)
     event = WebhookEvent.find(event_id)
-    return if event.nil? # log
+    return if event.nil?
 
     subscriber = event.webhook_subscriber
-    return if subscriber.nil? # log
+    return if subscriber.nil?
 
     # send the webhook request to the subscriber
     response = post_request(subscriber, event)
