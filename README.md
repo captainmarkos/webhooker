@@ -153,6 +153,32 @@ BroadcastWebhook.call(event: 'events.test', payload: { test: 2 })
 ```
 
 
+#### Subscribing to Events
+
+Webhook subscribers can subscribe to specific events.  By default subscribers are subscribe to all `['*']` events.
+
+```ruby
+[1] pry(main)> WebhookSubscriber.last.subscriptions
+=> ["*"]
+
+[2] pry(main)> WebhookSubscriber.last.subscribed?('events.noop')
+=> true
+
+[3] pry(main)> WebhookSubscriber.last.subscribed?('events.test')
+=> true
+
+[4] pry(main)> WebhookSubscriber.last.update!(subscriptions: ['events.test'])
+=> true
+
+[5] pry(main)> WebhookSubscriber.last.subscribed?('events.noop')
+=> false
+
+[6] pry(main)> WebhookSubscriber.last.subscribed?('events.test')
+=> true
+
+[7] pry(main)> WebhookSubscriber.last.subscriptions
+=> ["events.test"]
+```
 
 
 
