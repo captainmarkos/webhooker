@@ -9,10 +9,6 @@ module Api
 
       private
 
-      def set_event
-        @webhook_event = WebhookEvent.find()
-      end
-
       def permitted_params
         params.require(:webhook).permit(
           :subscriber_id, :subscriber_url, :event, :payload

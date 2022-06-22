@@ -61,7 +61,7 @@ The [pry-theme gem](https://github.com/kyrylo/pry-theme) adds some spice to the 
 
 [3] pry(main)> s = WebhookSubscriber.create!(url: 'https://functions.ecorp.example/webhooks')
 
-[4] pry(main)> e = WebhookEvent.create!(webhook_subscriber: s, name: 'events.test', payload: { test: 1 })
+[4] pry(main)> e = WebhookEvent.create!(webhook_subscriber: s, event: 'events.test', payload: { test: 1 })
 
 [5] pry(main)> WebhookWorker.new.perform(WebhookEvent.last.id)
 ```
@@ -131,6 +131,28 @@ config.host_authorization = {
   }
 }
 ```
+
+
+#### Broadcasting Webhook Events
+
+In a new terminal, start up sidekiq:
+```bash
+sidekiq
+```
+
+NOTE: To clear jobs from sidekiq, in the rails console (not recommended to run in production):
+
+```ruby
+Sidekiq.redis(&:flushdb)
+```
+
+
+To broadcast a webhook event, in a rails console
+```ruby
+BroadcastWebhook.call(event: 'events.test', payload: { test: 2 })
+```
+
+
 
 
 
