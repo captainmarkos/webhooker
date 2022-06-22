@@ -2,6 +2,11 @@ class WebhookSubscriber < ApplicationRecord
   has_many :webhook_events
 
   validates :url, presence: true
+  validates :subscriptions, length: { minimum: 1 }, presence: true
+
+  def subscribed?(event)
+    (subscriptions & ['*', event]).any?
+  end
 
   def url
     webhooks_url || url

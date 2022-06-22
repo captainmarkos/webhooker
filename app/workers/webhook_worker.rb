@@ -10,6 +10,9 @@ class WebhookWorker
     subscriber = webhook_event.webhook_subscriber
     return if subscriber.nil?
 
+    # skip over event types that the subscriber is not subscribed to
+    return unless subscriber.subscribed?(webhook_event.event)
+
     # send the webhook request to the subscriber
     response = post_request(subscriber, webhook_event)
     clogger.log_activity("POST response status: #{response.status}")
