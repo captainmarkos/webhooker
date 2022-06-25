@@ -26,7 +26,7 @@ class WebhookWorker
     return if subscriber.nil?
 
     # skip over event types that the subscriber is not subscribed to
-    return unless subscriber.subscribed?(webhook_event.event)
+    return if !subscriber.enabled? || !subscriber.subscribed?(webhook_event.event)
 
     # send the webhook request to the subscriber
     response = post_request(subscriber, webhook_event)

@@ -4,7 +4,7 @@ class BroadcastWebhook
   end
 
   def call
-    WebhookSubscriber.find_each do |subscriber|
+    WebhookSubscriber.enabled.find_each do |subscriber|
       next unless subscriber.subscribed?(event)
 
       webhook_event = WebhookEvent.create!(
