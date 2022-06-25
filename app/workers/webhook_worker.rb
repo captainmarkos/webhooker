@@ -3,6 +3,21 @@ require 'http'
 class WebhookWorker
   include Sidekiq::Worker
 
+  MAX_RETRIES = 10
+
+  # Set the max number of retries and tell sidekiq not to store failed webhooks
+  # in its set of 'dead' jobs. We don't care about dead webhook jobs.
+  sidekiq_options retry: MAX_RETRIES, dead: false
+
+  sidekiq_retry_in do |retry_count|
+    # Exponential backoff, with a random 30-second to 10-minute 'jitter'
+    # added in to help spread out any webhook bursts.
+    jitter = rand(30.seconds..10.minutes).to_i
+
+    # Sidekiq's default retry cadence is retry_count ** 4
+    (retry_count ** 5) + jitter
+  end
+
   def perform(webhook_event_id)
     webhook_event = WebhookEvent.find(webhook_event_id)
     return if webhook_event.nil?

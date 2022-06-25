@@ -181,4 +181,43 @@ Webhook subscribers can subscribe to specific events.  By default subscribers ar
 ```
 
 
+#### Retry Algorithm
+
+In the `WebhookWorker` we'll setup the following retry scheme:
+
+```ruby
+  MAX_RETRIES = 10
+
+  # Set the max number of retries and tell sidekiq not to store failed webhooks
+  # in its set of 'dead' jobs. We don't care about dead webhook jobs.
+  sidekiq_options retry: MAX_RETRIES, dead: false
+
+  sidekiq_retry_in do |retry_count|
+    # Exponential backoff, with a random 30-second to 10-minute 'jitter'
+    # added in to help spread out any webhook bursts.
+    jitter = rand(30.seconds..10.minutes).to_i
+
+    # Sidekiq's default retry cadence is retry_count ** 4
+    (retry_count ** 5) + jitter
+  end
+```
+
+Here we've set the maximum number of retries to 10, and we've also told Sidekiq to not store these failed webhooks in its set of "dead" jobs. We don't care about dead webhook jobs. With our retry exponent of 5 and a maximum retry limit of 10, retries should occur over approximately 3 days:
+
+
+```ruby
+[1] pry(main)> include ActionView::Helpers::DateHelper
+=> Object
+
+[2] pry(main)> total = 0.0
+=> 0.0
+
+[3] pry(main)> 10.times { |i| total += ((i + 1) ** 5) + rand(30.seconds..10.minutes) }
+=> 10
+
+[4] pry(main)> distance_of_time_in_words(total)
+=> "3 days"
+```
+
+
 
