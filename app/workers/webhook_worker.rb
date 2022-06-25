@@ -36,6 +36,20 @@ class WebhookWorker
 
     # raise failed request error and let Sidekiq handle retrying
     raise FailedRequestError unless response.status.success?
+  rescue OpenSSL::SSL::SSLError
+    # Since TLS issues may be due to an expired cert, we'll continue retrying
+    # since the issue may get resolved within our 3 day retry window.  This
+    # may be a good place to send an alert to the endpoint owner.
+    webhook_event.update!(response: { error: 'TLS_ERROR' })
+    clogger.log_activity('OpenSSL::SSL::SSLError raised')
+  rescue HTTP::ConnectionError
+    # This error usually means DNS issues. To save us the bandwidth,
+    # we're going to disable the endpoint. This would also be a good
+    # location to send an alert to the endpoint owner.
+    webhook_event.update(response: { error: 'CONNECTION_ERROR' })
+    webhook_event.disable!
+    clogger.log_activity('HTTP::ConnectionError raised')
+    clogger.log_activity("WebhookEvent id: #{webhook_event.id} has been disabled")
   rescue HTTP::TimeoutError
     # This error means the webhook endpoint timed out.  We can either
     # raise a failed request error to trigger a retry or leave it
