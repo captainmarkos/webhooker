@@ -78,11 +78,7 @@ Pry.config.theme = 'vividchalk'
 ### Receiving Live Notification Messages
 
 
-To receive live notification messages (referred to as LNM from here on out) we
-need a server running that will listen for them.  For this particalur app we'll be
-running a rails server that will be sending AND receiving LNMs so nothing else is needed.
-However if we were only receiving LNMs then to test we would need a server to expose our
-local dev environment rails server.  Here's a few options for local development.
+To receive live notification messages (referred to as LNM from here on out) we need a server running that will listen for them.  For this particalur app we'll be running a rails server that will be sending AND receiving LNMs so nothing else is needed. However if we were only receiving LNMs then to test we would need a server to expose our local dev environment rails server.  Here's a few options for local development.
 
 - [ngrok](https://ngrok.com/)
 - [localtunnel](https://localtunnel.github.io/www/)
@@ -133,27 +129,7 @@ config.host_authorization = {
 ```
 
 
-#### Broadcasting Webhook Events
-
-In a new terminal, start up sidekiq:
-```bash
-sidekiq
-```
-
-NOTE: To clear jobs from sidekiq, in the rails console (not recommended to run in production):
-
-```ruby
-Sidekiq.redis(&:flushdb)
-```
-
-
-To broadcast a webhook event, in a rails console
-```ruby
-BroadcastWebhook.call(event: 'events.test', payload: { test: 2 })
-```
-
-
-#### Subscribing to Events
+### Subscribing to Events
 
 Webhook subscribers can subscribe to specific events.  By default subscribers are subscribe to all `['*']` events.
 
@@ -178,6 +154,26 @@ Webhook subscribers can subscribe to specific events.  By default subscribers ar
 
 [7] pry(main)> WebhookSubscriber.last.subscriptions
 => ["events.test"]
+```
+
+
+### Broadcasting Webhook Events
+
+In a new terminal, start up sidekiq:
+```bash
+sidekiq
+```
+
+NOTE: To clear jobs from sidekiq, in the rails console (not recommended to run in production):
+
+```ruby
+Sidekiq.redis(&:flushdb)
+```
+
+
+To broadcast a webhook event, in a rails console
+```ruby
+BroadcastWebhook.call(event: 'events.test', payload: { test: 2 })
 ```
 
 
@@ -218,6 +214,5 @@ Here we've set the maximum number of retries to 10, and we've also told Sidekiq 
 [4] pry(main)> distance_of_time_in_words(total)
 => "3 days"
 ```
-
 
 
