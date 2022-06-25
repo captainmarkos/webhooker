@@ -58,12 +58,6 @@ The [pry-theme gem](https://github.com/kyrylo/pry-theme) adds some spice to the 
 [1] pry(main)> pry-theme install vividchalk
 
 [2] pry(main)> pry-theme try vividchalk
-
-[3] pry(main)> s = WebhookSubscriber.create!(url: 'https://functions.ecorp.example/webhooks')
-
-[4] pry(main)> e = WebhookEvent.create!(webhook_subscriber: s, event: 'events.test', payload: { test: 1 })
-
-[5] pry(main)> WebhookWorker.new.perform(WebhookEvent.last.id)
 ```
 
 ```bash
@@ -132,6 +126,19 @@ config.host_authorization = {
 ### Subscribing to Events
 
 Webhook subscribers can subscribe to specific events.  By default subscribers are subscribe to all `['*']` events.
+
+```ruby
+[1] pry(main)> s = WebhookSubscriber.create!(url: 'https://functions.ecorp.example/webhooks')
+
+[2] pry(main)> s.subscriptions
+=> ["*"]
+
+[3] pry(main)> e = WebhookEvent.create!(webhook_subscriber: s, event: 'events.test', payload: { test: 1 })
+
+[4] pry(main)> WebhookWorker.new.perform(WebhookEvent.last.id)
+```
+
+Checking what subscriptions are subscribed to:
 
 ```ruby
 [1] pry(main)> WebhookSubscriber.last.subscriptions
@@ -214,5 +221,9 @@ Here we've set the maximum number of retries to 10, and we've also told Sidekiq 
 [4] pry(main)> distance_of_time_in_words(total)
 => "3 days"
 ```
+
+
+### Disabling Webhook Subscriptions
+
 
 
