@@ -12,7 +12,7 @@ class WebhookWorker
   sidekiq_retry_in do |retry_count|
     # Exponential backoff, with a random 30-second to 10-minute 'jitter'
     # added in to help spread out any webhook bursts.
-    jitter = rand(30.seconds..10.minutes).to_i
+    jitter = rand((30.seconds)..(10.minutes)).to_i
 
     # Sidekiq's default retry cadence is retry_count ** 4
     (retry_count ** 5) + jitter
@@ -23,10 +23,7 @@ class WebhookWorker
     return if webhook_event.nil?
 
     subscriber = webhook_event.webhook_subscriber
-    return if subscriber.nil?
-
-    # skip over event types that the subscriber is not subscribed to
-    return if !subscriber.enabled? || !subscriber.subscribed?(webhook_event.event)
+    return unless valid_subscriber?(subscriber, webhook_event.event)
 
     # send the webhook request to the subscriber
     response = post_request(subscriber, webhook_event)
@@ -37,25 +34,11 @@ class WebhookWorker
     # raise failed request error and let Sidekiq handle retrying
     raise FailedRequestError unless response.status.success?
   rescue OpenSSL::SSL::SSLError
-    # Since TLS issues may be due to an expired cert, we'll continue retrying
-    # since the issue may get resolved within our 3 day retry window.  This
-    # may be a good place to send an alert to the endpoint owner.
-    webhook_event.update!(response: { error: 'TLS_ERROR' })
-    clogger.log_activity('OpenSSL::SSL::SSLError raised')
+    handle_ssl_error(webhook_event)
   rescue HTTP::ConnectionError
-    # This error usually means DNS issues. To save us the bandwidth,
-    # we're going to disable the endpoint. This would also be a good
-    # location to send an alert to the endpoint owner.
-    webhook_event.update(response: { error: 'CONNECTION_ERROR' })
-    webhook_event.disable!
-    clogger.log_activity('HTTP::ConnectionError raised')
-    clogger.log_activity("WebhookEvent id: #{webhook_event.id} has been disabled")
+    handle_connection_error(webhook_event, subscriber)
   rescue HTTP::TimeoutError
-    # This error means the webhook endpoint timed out.  We can either
-    # raise a failed request error to trigger a retry or leave it
-    # as-is and consider timeouts terminal.  We'll do the latter.
-    webhook_event.update!(response: { error: 'TIMEOUT_ERROR' })
-    clogger.log_activity('HTTP::TimeoutError raised')
+    handle_timeout_error(webhook_event)
   end
 
   private
@@ -92,5 +75,35 @@ class WebhookWorker
 
   def clogger
     @clogger ||= CLogger.new('WebhookWorker.perform')
+  end
+
+  def valid_subscriber?(subscriber, event)
+    subscriber.present? && subscriber.enabled? && subscriber.subscribed?(event)
+  end
+
+  def handle_ssl_error(webhook_event)
+    # Since TLS issues may be due to an expired cert, we'll continue retrying
+    # since the issue may get resolved within our 3 day retry window.  This
+    # may be a good place to send an alert to the endpoint owner.
+    webhook_event.update!(response: { error: 'TLS_ERROR' })
+    clogger.log_activity('OpenSSL::SSL::SSLError raised')
+  end
+
+  def handle_connection_error(webhook_event, webhook_subscriber)
+    # This error usually means DNS issues. To save us the bandwidth,
+    # we're going to disable the endpoint. This would also be a good
+    # location to send an alert to the endpoint owner.
+    webhook_event.update(response: { error: 'CONNECTION_ERROR' })
+    webhook_subscriber.disable!
+    clogger.log_activity('HTTP::ConnectionError raised')
+    clogger.log_activity("WebhookEvent id: #{webhook_event.id} has been disabled")
+  end
+
+  def handle_timeout_error(webhook_event)
+    # This error means the webhook endpoint timed out.  We can either
+    # raise a failed request error to trigger a retry or leave it
+    # as-is and consider timeouts terminal.  We'll do the latter.
+    webhook_event.update!(response: { error: 'TIMEOUT_ERROR' })
+    clogger.log_activity('HTTP::TimeoutError raised')
   end
 end
