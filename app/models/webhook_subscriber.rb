@@ -11,9 +11,9 @@ class WebhookSubscriber < ApplicationRecord
     (subscriptions & ['*', event]).any?
   end
 
-  def url
-    webhooks_url || url
-  end
+  #def url
+  #  webhooks_url || url
+  #end
 
   def disable!
     update!(enabled: false)

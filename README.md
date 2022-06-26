@@ -225,5 +225,17 @@ Here we've set the maximum number of retries to 10, and we've also told Sidekiq 
 
 ### Disabling Webhook Subscriptions
 
+In certain cases we may want to disable subscriptions.  Easy enough to do
+
+```ruby
+[1] pry(main)> WebhookSubscriber.find(1).disable!
+```
 
 
+### References:
+
+I enjoyed this tutorial greatly!
+[https://keygen.sh/blog/how-to-build-a-webhook-system-in-rails-using-sidekiq/](https://keygen.sh/blog/how-to-build-a-webhook-system-in-rails-using-sidekiq/)
+
+Pattern matching in Ruby implemented with the `case`/`in` expression.
+[https://docs.ruby-lang.org/en/3.0/syntax/pattern_matching_rdoc.html](https://docs.ruby-lang.org/en/3.0/syntax/pattern_matching_rdoc.html)

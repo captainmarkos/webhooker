@@ -22,17 +22,15 @@ class WebhookWorker
     webhook_event = WebhookEvent.find(webhook_event_id)
     return if webhook_event.nil?
 
-    subscriber = webhook_event.webhook_subscriber
+    subscriber = webhook_event.subscriber
     return unless valid_subscriber?(subscriber, webhook_event.event)
 
     # send the webhook request to the subscriber
     response = post_request(subscriber, webhook_event)
     clogger.log_activity("POST response status: #{response.status}")
-
     store_response(webhook_event, response)
 
-    # raise failed request error and let Sidekiq handle retrying
-    raise FailedRequestError unless response.status.success?
+    failed_response_handler(webhook_event, response)
   rescue OpenSSL::SSL::SSLError
     handle_ssl_error(webhook_event)
   rescue HTTP::ConnectionError
@@ -89,14 +87,14 @@ class WebhookWorker
     clogger.log_activity('OpenSSL::SSL::SSLError raised')
   end
 
-  def handle_connection_error(webhook_event, webhook_subscriber)
+  def handle_connection_error(webhook_event, subscriber)
     # This error usually means DNS issues. To save us the bandwidth,
     # we're going to disable the endpoint. This would also be a good
     # location to send an alert to the endpoint owner.
     webhook_event.update(response: { error: 'CONNECTION_ERROR' })
-    webhook_subscriber.disable!
+    subscriber.disable!
     clogger.log_activity('HTTP::ConnectionError raised')
-    clogger.log_activity("WebhookEvent id: #{webhook_event.id} has been disabled")
+    clogger.log_activity("WebhookSubscriber id: #{subscriber.id} has been disabled")
   end
 
   def handle_timeout_error(webhook_event)
@@ -105,5 +103,40 @@ class WebhookWorker
     # as-is and consider timeouts terminal.  We'll do the latter.
     webhook_event.update!(response: { error: 'TIMEOUT_ERROR' })
     clogger.log_activity('HTTP::TimeoutError raised')
+  end
+
+  def failed_response_handler(webhook_event, response)
+    return if response.status.success?
+
+    subscriber = webhook_event.subscriber
+    raise FailedRequestError unless subscriber.url.match?(/\.ngrok\.io/i)
+
+    code = response.code.to_i
+    body = response.body.to_s
+    clogger.log_activity(
+      "FAIL: response code: #{code} body: #{body} " \
+      "WebhookEvent id: #{webhook_event.id} " \
+      "Subscriber id: #{subscriber.id}"
+    )
+
+    if code == 404 && body.match?(/tunnel .+?\.ngrok\.io not found/i)
+      # Automatically delete dead ngrok tunnel endpoints. This error likely
+      # means that the user forgot to remove their temporary ngrok webhook
+      # endpoint, seeing as it no longer exists.
+      subscriber.disable! # destroy!
+    elsif code == 502
+      # The bad gateway error usually means that the tunnel is still open
+      # but the local server is no longer responding for any number of
+      # reasons. We're going to automatically retry.
+      raise FailedRequestError
+    elsif code == 504
+      # Automatically disable these since the endpoint is likely an ngrok
+      # "stable" URL, but it's not currently running. To save bandwidth,
+      # we do not want to automatically retry.
+      subscriber.disable!
+    else
+      # Raise a failed request error and let Sidekiq handle retrying.
+      raise FailedRequestError
+    end
   end
 end
