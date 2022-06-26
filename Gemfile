@@ -41,6 +41,10 @@ group :development, :test do
   gem 'pry-byebug'
   gem 'pry-theme'
   gem 'rubocop', require: false
+  gem 'rspec-rails'
+  gem 'factory_bot_rails'
+  gem 'shoulda-matchers', '~> 5.0'
+  gem 'faker', :git => 'https://github.com/faker-ruby/faker.git', :branch => 'master'
 end
 
 group :development do

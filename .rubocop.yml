@@ -26,6 +26,9 @@ Style/FrozenStringLiteralComment:
 Style/Documentation:
   Enabled: false
 
+Style/BlockDelimiters:
+  Enabled: false
+
 Layout/EndOfLine:
   EnforcedStyle: lf
 
