@@ -27,7 +27,7 @@ class WebhookWorker
 
     # send the webhook request to the subscriber
     response = post_request(subscriber, webhook_event)
-    clogger.log_activity("POST response status: #{response.status}")
+    clogger.log_activity("POST response code: #{response.code}")
     store_response(webhook_event, response)
 
     failed_response_handler(webhook_event, response)

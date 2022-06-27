@@ -43,7 +43,6 @@ group :development, :test do
   gem 'rubocop', require: false
   gem 'rspec-rails'
   gem 'factory_bot_rails'
-  gem 'shoulda-matchers', '~> 5.0'
   gem 'faker', :git => 'https://github.com/faker-ruby/faker.git', :branch => 'master'
 end
 
@@ -52,3 +51,8 @@ group :development do
   # gem "spring"
 end
 
+group :test do
+  gem 'shoulda-matchers', '~> 5.0'
+  gem 'simplecov', require: false
+  gem 'database_cleaner-active_record', require: false
+end
