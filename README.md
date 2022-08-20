@@ -43,6 +43,15 @@ gem 'pry-rails'
 gem 'pry-byebug'
 gem 'pry-theme'
 gem 'rubocop', require: false
+
+gem 'rspec-rails'
+gem 'factory_bot_rails'
+gem 'faker', :git => 'https://github.com/faker-ruby/faker.git', :branch => 'master'
+
+# in test
+gem 'shoulda-matchers', '~> 5.0'
+gem 'simplecov', require: false
+gem 'database_cleaner-active_record', require: false
 ```
 
 #### Turn off irb autocomplete in rails console
@@ -58,6 +67,8 @@ The [pry-theme gem](https://github.com/kyrylo/pry-theme) adds some spice to the 
 [1] pry(main)> pry-theme install vividchalk
 
 [2] pry(main)> pry-theme try vividchalk
+
+[3] pry(main)> pry-theme list
 ```
 
 ```bash
